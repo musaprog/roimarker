@@ -61,16 +61,24 @@ class Marker:
             else:
                 raise TypeError('old_markings in incorrect type for Marker at marker.py')
          
-         
+        self.exit = False
+        self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
 
     def run(self):
         self.nextImage()
         #plt.show()
         
-        while True:
-            plt.pause(0.02)
-
-
+        while self.exit == False:
+            try:
+                plt.pause(0.02)
+            except:
+                break
+    
+        #plt.disconnect(self.cid)
+        if self.current_i == len(self.fns):
+            self.saveMarkings()
+        plt.close(self.fig)   
+    
     def __buttonPressed(self, event):
         '''
         A callback function connecting to matplotlib's event manager.
@@ -120,8 +128,9 @@ class Marker:
         self.current_i += 1
 
         if self.current_i == len(self.fns):
-            self.saveMarkings()
-            plt.close('all')
+            #self.saveMarkings()
+            #plt.close('all')
+            self.exit = True    
             return 0
             #sys.exit(0)
 
@@ -193,6 +202,13 @@ class Marker:
 
     def getCurrentMarking(self):
         return [self.current, self.markings[self.current][-1]]
+
+    
+    def close(self):
+        
+        self.exit = True
+        
+        
 
 if __name__ == "__main__":
     '''
