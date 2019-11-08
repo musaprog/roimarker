@@ -60,11 +60,15 @@ class Marker:
                 raise NotImplementedError('Giving many old markings not yet implemented')
             else:
                 raise TypeError('old_markings in incorrect type for Marker at marker.py')
-                
+         
+         
 
     def run(self):
         self.nextImage()
-        plt.show()
+        #plt.show()
+        
+        while True:
+            plt.pause(0.02)
 
 
     def __buttonPressed(self, event):
@@ -86,9 +90,9 @@ class Marker:
             self.image_maxval += 0.3
             self.updateImage()
         
-        elif event.key == 'c':
-            os.remove(self.current)
-            self.nextImage()
+        #elif event.key == 'c':
+        #    os.remove(self.current)
+        #    self.nextImage()
 
     def __onSelectRectangle(self, eclick, erelease):
         
@@ -138,20 +142,33 @@ class Marker:
             print('Old markings')
             raise ValueError('Cannot read file {}'.format(self.current))
         self.image -= np.min(self.image)
-        print((self.image))
+        #print((self.image))
         self.image /= np.max(self.image)
         self.updateImage()
 
 
     def updateImage(self):
-        self.ax.clear()  
+        
+        image = self.image
+
         if self.clipping:
-            capvals = (0, np.mean(self.image) *self.image_maxval)
-            self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
-        else:
-            self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
+            capvals = (0, np.mean(image) *self.image_maxval)
+            image = np.clip(image, *capvals)
+            image /= np.max(image)
+
+            #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
+            
+        #else:
+        #    #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
+        
+        try:
+            self.ax_imshow.set_data(image)
+        except AttributeError:
+            self.ax_imshow = self.ax.imshow(image,cmap='gist_gray', interpolation='nearest', vmin=0, vmax=1)
+
 
         plt.draw()
+        #plt.draw()
        
     
     def setMarkingsSaveFn(self, fn):
