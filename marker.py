@@ -144,11 +144,8 @@ class Marker:
         self.current_i += 1
 
         if self.current_i >= len(self.fns):
-            #self.saveMarkings()
-            #plt.close('all')
             self.exit = True    
             return 0
-            #sys.exit(0)
 
         for fn in self.fns[self.current_i:]:
             print(fn)
@@ -163,6 +160,12 @@ class Marker:
                 break          
             self.current_i += 1
         
+        if self.current_i >= len(self.fns):
+            self.current_i == len(self.fns)
+            self.exit = True
+            return 0
+
+       
         # Set marking to empty
         self.markings[self.current] = []
        
