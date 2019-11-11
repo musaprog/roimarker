@@ -19,7 +19,8 @@ from matplotlib.widgets import RectangleSelector
 
 class Marker:
     
-    def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None):
+    def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None
+            callback_on_exit=None):
         '''
         fig, ax             plt.subplots() generated
         image_fns           A list of image file names that are to be annotated
@@ -31,7 +32,6 @@ class Marker:
         self.ax = ax
             
         self.fns = image_fns
-        
 
         self.current = None
         self.current_i = -1
@@ -62,6 +62,7 @@ class Marker:
                 raise TypeError('old_markings in incorrect type for Marker at marker.py')
          
         self.exit = False
+        self.callback_on_exit = callback_on_exit
         self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
 
     def run(self):
@@ -85,6 +86,8 @@ class Marker:
             tkinter.messagebox.showinfo('All images processed',
                     'Markings saved at\n{}'.format(self.markings_savefn))
         
+        if self.callback_on_exit:
+            self.callback_on_exit()
 
     def __buttonPressed(self, event):
         '''
