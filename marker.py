@@ -19,7 +19,7 @@ from matplotlib.widgets import RectangleSelector
 
 class Marker:
     
-    def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None
+    def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None,
             callback_on_exit=None):
         '''
         fig, ax             plt.subplots() generated
