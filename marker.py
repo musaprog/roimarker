@@ -20,12 +20,15 @@ from matplotlib.widgets import RectangleSelector
 class Marker:
     
     def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None,
-            callback_on_exit=None):
+            callback_on_exit=None, reselect_fns=None):
         '''
         fig, ax             plt.subplots() generated
         image_fns           A list of image file names that are to be annotated
         markings_savefn     Filename where the annotations are saved
-        old_markings        A filename to old markings
+        old_markings        A filename to old markings (string or list) or loaded old markings (dict)
+                            or True to try to load from where markings would be saved.
+        callback_on_exit    This gets called on successfull exit
+        reslect_fns         List of filenames that get reselected even if previous values exits
         '''
         
         self.fig = fig
@@ -38,7 +41,8 @@ class Marker:
 
         self.markings = {}
         self.N_previous = 0
-        
+        self.reselect_fns = reselect_fns
+
         self.clipping = clipping
         self.image_maxval = 1
         
@@ -48,7 +52,9 @@ class Marker:
         self.markings_savefn = markings_savefn
         
         if old_markings:
-            if type(old_markings) == type('string'):
+            if old_markings is True:
+                self.loadMarkings(self.markings_savefn)
+            elif type(old_markings) == type('string'):
                 if os.path.isfile(old_markings):
                     self.loadMarkings(old_markings)
                 else:
@@ -137,7 +143,7 @@ class Marker:
         
         self.current_i += 1
 
-        if self.current_i == len(self.fns):
+        if self.current_i >= len(self.fns):
             #self.saveMarkings()
             #plt.close('all')
             self.exit = True    
@@ -145,13 +151,23 @@ class Marker:
             #sys.exit(0)
 
         for fn in self.fns[self.current_i:]:
-
-            if not fn in self.markings.keys():
+            print(fn)
+            print(os.path.basename(os.path.dirname(fn)))
+            print(self.reselect_fns)
+            if not fn in self.markings.keys() and self.reselect_fns is None:
                 self.current = fn
                 break
 
+            if os.path.basename(os.path.dirname(fn)) in self.reselect_fns:
+                self.current = fn
+                break          
             self.current_i += 1
         
+        # Set marking to empty
+        self.markings[self.current] = []
+       
+        self.fig.suptitle(self.current, fontsize=8)
+
         print('Annotating image {}/{}'.format(self.current_i+1+self.N_previous, len(self.fns)+self.N_previous))
         print(self.current)
         try:
