@@ -12,7 +12,7 @@ import json
 
 import tifffile
 import numpy as np
-
+import tkinter.messagebox
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 
@@ -68,7 +68,7 @@ class Marker:
         self.nextImage()
         #plt.show()
         
-        self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save', transform=self.ax.transAxes,
+        self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save\nAutosave after the last image', transform=self.ax.transAxes,
                 verticalalignment='bottom')
 
         while self.exit == False:
@@ -77,11 +77,15 @@ class Marker:
             except:
                 break
     
+        plt.close(self.fig)   
+        
         #plt.disconnect(self.cid)
         if self.current_i == len(self.fns):
             self.saveMarkings()
-        plt.close(self.fig)   
-    
+            tkinter.messagebox.showinfo('All images processed',
+                    'Markings saved at\n{}'.format(self.markings_savefn))
+        
+
     def __buttonPressed(self, event):
         '''
         A callback function connecting to matplotlib's event manager.
