@@ -68,6 +68,9 @@ class Marker:
         self.nextImage()
         #plt.show()
         
+        self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save', transform=self.ax.transAxes,
+                verticalalignment='bottom')
+
         while self.exit == False:
             try:
                 plt.pause(0.02)
