@@ -24,9 +24,14 @@ class Marker:
             relative_fns_from=False,
             selection_type='box'):
         '''
+        Marking interests of region (ROIs) on images.
+
+        After selecting the ROIs, a separate json file (markings_savefn) is created, which
+        contains 
+        
         fig, ax             plt.subplots() generated
         image_fns           A list of image file names that are to be annotated
-        markings_savefn     Filename where the annotations are saved
+        markings_savefn     Filename where the annotations are saved. If None do not save
         old_markings        A filename to old markings (string or list) or loaded old markings (dict)
                             or True to try to load from where markings would be saved.
         callback_on_exit    This gets called on successfull exit
@@ -83,9 +88,15 @@ class Marker:
         self.callback_on_exit = callback_on_exit
         self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
 
+
     def run(self):
+        '''
+        Run the marking process where user selects ROIs for each given image.
+
+        Returns self.markings that is a dictionary with image filenames as keys
+        and ROIs as items.
+        '''
         self.nextImage()
-        #plt.show()
         
         self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save\nAutosave after the last image', transform=self.ax.transAxes,
                 verticalalignment='bottom')
@@ -98,7 +109,6 @@ class Marker:
     
         plt.close(self.fig)   
         
-        #plt.disconnect(self.cid)
         if self.current_i == len(self.fns):
             self.saveMarkings()
             tkinter.messagebox.showinfo('All images processed',
@@ -148,7 +158,6 @@ class Marker:
             self.markings[self.current] = []
         
         self.markings[self.current].append([x, y, width, height])
-
 
 
     def nextImage(self):
@@ -224,6 +233,7 @@ class Marker:
     def setMarkingsSaveFn(self, fn):
         self.markings_savefn = fn
 
+
     def loadMarkings(self, fn):
         
         with open(fn, 'r') as fp:
@@ -231,15 +241,21 @@ class Marker:
         
         self.markings = markings
 
+
     def saveMarkings(self):
         '''
         Saves the markings as a json file
         '''
+        if self.markings_savefn is None:
+            return None
+
         with open(self.markings_savefn, 'w') as fp:
             json.dump(self.markings, fp)
-    
+
+
     def getMarkings(self):
         return self.markings
+
 
     def getCurrentMarking(self):
         return [self.current, self.markings[self.current][-1]]
