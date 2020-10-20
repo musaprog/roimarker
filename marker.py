@@ -20,7 +20,9 @@ from matplotlib.widgets import RectangleSelector
 class Marker:
     
     def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None,
-            callback_on_exit=None, reselect_fns=None):
+            callback_on_exit=None, reselect_fns=None,
+            relative_fns_from=False,
+            selection_type='box'):
         '''
         fig, ax             plt.subplots() generated
         image_fns           A list of image file names that are to be annotated
@@ -29,6 +31,9 @@ class Marker:
                             or True to try to load from where markings would be saved.
         callback_on_exit    This gets called on successfull exit
         reslect_fns         List of filenames that get reselected even if previous values exits
+        relative_fns_from   If a valid path, in the markings file save relative fns starting from
+                                this directory instead of the full, absolute filenames.
+        selection_type      'box' or 'arrow'
         '''
         
         self.fig = fig
@@ -46,8 +51,15 @@ class Marker:
         self.clipping = clipping
         self.image_maxval = 1
         
+        if selection_type == 'arrow':
+            drawtype = 'line'
+        elif selection_type == 'box':
+            drawtype = 'box'
+        else:
+            raise ValueError('Selection type for Marker has to be "box or "arrow", not {}'.format(selection_type))
+
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__buttonPressed)
-        self.rectangle = RectangleSelector(ax, self.__onSelectRectangle, useblit=True)
+        self.rectangle = RectangleSelector(ax, self.__onSelectRectangle, useblit=True, drawtype=drawtype)
                
         self.markings_savefn = markings_savefn
         
