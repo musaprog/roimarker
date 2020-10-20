@@ -116,6 +116,9 @@ class Marker:
         
         if self.callback_on_exit:
             self.callback_on_exit()
+        
+        return self.markings
+
 
     def __buttonPressed(self, event):
         '''
