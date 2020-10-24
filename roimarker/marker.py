@@ -68,17 +68,17 @@ class Marker:
         else:
             raise ValueError('Selection type for Marker has to be "box or "arrow", not {}'.format(selection_type))
 
-        self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__buttonPressed)
-        self.rectangle = RectangleSelector(ax, self.__onSelectRectangle, useblit=True, drawtype=drawtype)
+        self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
+        self.rectangle = RectangleSelector(ax, self._on_select_rectangle, useblit=True, drawtype=drawtype)
                
         self.markings_savefn = markings_savefn
         
         if old_markings:
             if old_markings is True:
-                self.loadMarkings(self.markings_savefn)
+                self.load_markings(self.markings_savefn)
             elif type(old_markings) == type('string'):
                 if os.path.isfile(old_markings):
-                    self.loadMarkings(old_markings)
+                    self.load_markings(old_markings)
                 else:
                     print("Warning! Couldn't import old_markings in Marker (marker.py)")
             elif type(old_markings) == type({}):
@@ -121,7 +121,7 @@ class Marker:
         Returns self.markings that is a dictionary with image filenames as keys
         and ROIs as items.
         '''
-        self.nextImage()
+        self.next_image()
         
         self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save\nAutosave after the last image', transform=self.ax.transAxes,
                 verticalalignment='bottom')
@@ -135,7 +135,7 @@ class Marker:
         plt.close(self.fig)   
         
         if self.current_i == len(self.fns):
-            self.saveMarkings()
+            self.save_markings()
             tkinter.messagebox.showinfo('All images processed',
                     'Markings saved at\n{}'.format(self.markings_savefn))
         
@@ -145,7 +145,7 @@ class Marker:
         return self._get_relative_markings()
 
 
-    def __buttonPressed(self, event):
+    def __button_pressed(self, event):
         '''
         A callback function connecting to matplotlib's event manager.
         '''
@@ -153,22 +153,23 @@ class Marker:
 
         # Navigating between the images
         if event.key == 'n':
-            self.nextImage()
+            self.next_image()
         elif event.key == 'w':
-            self.saveMarkings()
+            self.save_markings()
 
         elif event.key == 'z':
             self.image_maxval -= 0.3
-            self.updateImage()
+            self.update_image()
         elif event.key == 'x':
             self.image_maxval += 0.3
-            self.updateImage()
+            self.update_image()
         
         #elif event.key == 'c':
         #    os.remove(self.current)
-        #    self.nextImage()
+        #    self.next_image()
 
-    def __onSelectRectangle(self, eclick, erelease):
+
+    def _on_select_rectangle(self, eclick, erelease):
         
         # Get selection box coordinates and set the box inactive
         x1, y1 = eclick.xdata, eclick.ydata
@@ -188,7 +189,7 @@ class Marker:
         self.markings[self.current].append([x, y, width, height])
 
 
-    def nextImage(self):
+    def next_image(self):
         
         self.current_i += 1
 
@@ -231,10 +232,10 @@ class Marker:
         self.image -= np.min(self.image)
         #print((self.image))
         self.image /= np.max(self.image)
-        self.updateImage()
+        self.update_image()
 
 
-    def updateImage(self):
+    def update_image(self):
         
         image = self.image
 
@@ -258,11 +259,11 @@ class Marker:
         #plt.draw()
        
     
-    def setMarkingsSaveFn(self, fn):
+    def set_markings_savefn(self, fn):
         self.markings_savefn = fn
 
 
-    def loadMarkings(self, fn):
+    def load_markings(self, fn):
         
         with open(fn, 'r') as fp:
             markings = json.load(fp)
@@ -270,7 +271,7 @@ class Marker:
         self.markings = markings
 
 
-    def saveMarkings(self):
+    def save_markings(self):
         '''
         Saves the markings as a json file
         '''
@@ -281,11 +282,11 @@ class Marker:
             json.dump(self._get_relative_markings(), fp)
 
 
-    def getMarkings(self):
+    def get_markings(self):
         return self._get_relative_markings()
 
 
-    def getCurrentMarking(self):
+    def get_current_marking(self):
         return [self.current, self.markings[self.current][-1]]
 
     
