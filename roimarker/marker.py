@@ -21,7 +21,7 @@ class Marker:
     
     def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
-            relative_fns_from=False,
+            relative_fns_from=None,
             selection_type='box'):
         '''
         Marking interests of region (ROIs) on images.
@@ -52,6 +52,11 @@ class Marker:
         self.markings = {}
         self.N_previous = 0
         self.reselect_fns = reselect_fns
+        
+        if relative_fns_from is not None and not os.path.isdir(relative_fns_from):
+            raise ValueError("relative_fns_from if set, has to be a proper a proper directory")
+
+        self.relative_fns_from = relative_fns_from
 
         self.clipping = clipping
         self.image_maxval = 1
@@ -83,10 +88,30 @@ class Marker:
                 raise NotImplementedError('Giving many old markings not yet implemented')
             else:
                 raise TypeError('old_markings in incorrect type for Marker at marker.py')
-         
+            
+
+            # If relative_fns_from is set, it is expected that for any previous
+            # ROI selections, relative_fns_from was also set even if the directory may
+            # have been different.
+            # If this is not the case, previous data is not use but in the case of
+            # platform (OS) jump problems arise for sure. FIXME?
+            self.markings = {os.path.join(relative_fns_from, fn): rois for fn, rois in self.markings.items()
+                    if not os.path.isabs(fn)}
+
         self.exit = False
         self.callback_on_exit = callback_on_exit
         self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
+
+
+    def _get_relative_markings(self):
+        '''
+        Returns self.markings but with relative filesnames with rescpect to
+        self.relative_fns_from if set. If not set, just returns self.markings
+        '''
+        if self.relative_fns_from:
+            return {os.path.relpath(fn, start=self.relative_fns_from): rois for fn, rois in self.markings.items()}
+        else:
+            return self.markings
 
 
     def run(self):
@@ -117,7 +142,7 @@ class Marker:
         if self.callback_on_exit:
             self.callback_on_exit()
         
-        return self.markings
+        return self._get_relative_markings()
 
 
     def __buttonPressed(self, event):
@@ -253,11 +278,11 @@ class Marker:
             return None
 
         with open(self.markings_savefn, 'w') as fp:
-            json.dump(self.markings, fp)
+            json.dump(self._get_relative_markings(), fp)
 
 
     def getMarkings(self):
-        return self.markings
+        return self._get_relative_markings()
 
 
     def getCurrentMarking(self):
