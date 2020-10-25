@@ -10,7 +10,7 @@ install_requires = [
         ]
 
 setuptools.setup(
-    name="roimarker-jkemppainen", # Replace with your own username
+    name="roimarker",
     version="0.0.1",
     author="Joni Kemppainen",
     author_email="jjtkemppainen1@sheffield.ac.uk",
