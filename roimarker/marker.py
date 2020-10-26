@@ -16,6 +16,8 @@ import tkinter.messagebox
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 
+from roimarker.arrow_selector import ArrowSelector
+
 
 class Marker:
     
@@ -61,16 +63,16 @@ class Marker:
         self.clipping = clipping
         self.image_maxval = 1
         
-        if selection_type == 'arrow':
-            drawtype = 'line'
-        elif selection_type == 'box':
-            drawtype = 'box'
-        else:
-            raise ValueError('Selection type for Marker has to be "box or "arrow", not {}'.format(selection_type))
 
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
-        self.rectangle = RectangleSelector(ax, self._on_select_rectangle, useblit=True, drawtype=drawtype)
-               
+        
+        if selection_type == 'box':
+            self.rectangle = RectangleSelector(ax, self._on_select_rectangle, useblit=True)
+        elif selection_type == 'arrow':
+            self.rectangle = ArrowSelector(ax, self._on_select_arrow)
+        else:
+            raise ValueError('Selection type for Marker has to be "box or "arrow", not {}'.format(selection_type))
+        
         self.markings_savefn = markings_savefn
         
         if old_markings:
@@ -188,6 +190,20 @@ class Marker:
         
         self.markings[self.current].append([x, y, width, height])
 
+
+    def _on_select_arrow(self, eclick, erelease):
+        
+        try:
+            self.markings[self.current]
+        except KeyError:
+            self.markings[self.current] = []
+        
+        x1, y1 = eclick.xdata, eclick.ydata
+        x2, y2 = erelease.xdata, erelease.ydata       
+        
+        self.markings[self.current].append([x1, y1, x2, y2])
+
+       
 
     def next_image(self):
         
