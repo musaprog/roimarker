@@ -21,7 +21,7 @@ from roimarker.arrow_selector import ArrowSelector
 
 class Marker:
     
-    def __init__(self, fig, ax, image_fns, markings_savefn, clipping=True, old_markings=None,
+    def __init__(self, fig, ax, image_fns, markings_savefn, crops=None, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
             relative_fns_from=None,
             selection_type='box'):
@@ -34,6 +34,7 @@ class Marker:
         fig, ax             plt.subplots() generated
         image_fns           A list of image file names that are to be annotated
         markings_savefn     Filename where the annotations are saved. If None do not save
+        crops               List where an item is crp[ [x,y,w,h] for each image
         old_markings        A filename to old markings (string or list) or loaded old markings (dict)
                             or True to try to load from where markings would be saved.
         callback_on_exit    This gets called on successfull exit
@@ -47,6 +48,8 @@ class Marker:
         self.ax = ax
             
         self.fns = image_fns
+        
+        self.crops = crops
 
         self.current = None
         self.current_i = -1
@@ -268,7 +271,15 @@ class Marker:
         try:
             self.ax_imshow.set_data(image)
         except AttributeError:
-            self.ax_imshow = self.ax.imshow(image,cmap='gist_gray', interpolation='nearest', vmin=0, vmax=1)
+            #self.ax.set_xlim(0,image.shape[1])
+            #self.ax.set_ylim(image.shape[0], 0)
+            self.ax_imshow = self.ax.imshow(image, cmap='gist_gray', interpolation='nearest', vmin=0, vmax=1) #extent=[0, image.shape[0], 0, image.shape[1]])
+        
+        if self.crops:
+            c = self.crops[self.current_i]
+            self.ax.set_xlim(c[0], c[0]+c[2])
+            self.ax.set_ylim(c[1]+c[3], c[1])
+            #self.ax_imshow.set_extent([c[0], c[0]+c[2], c[1], c[1]+c[3]])
 
 
         plt.draw()
