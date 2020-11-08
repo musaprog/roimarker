@@ -3,6 +3,9 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# Version number to __version__ variable
+exec(open("roimarker/version.py").read())
+
 install_requires = [
         'numpy',
         'tifffile',
@@ -11,7 +14,7 @@ install_requires = [
 
 setuptools.setup(
     name="roimarker",
-    version="0.0.1",
+    version=__version__,
     author="Joni Kemppainen",
     author_email="jjtkemppainen1@sheffield.ac.uk",
     description="A ROI marker using matplotlib",
