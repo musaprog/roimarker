@@ -130,10 +130,12 @@ class Marker:
         
         self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save\nAutosave after the last image', transform=self.ax.transAxes,
                 verticalalignment='bottom')
-
+        
+        plt.show(block=False)
+        
         while self.exit == False:
             try:
-                plt.pause(0.02)
+                self.fig.canvas.start_event_loop(0.1)
             except:
                 break
     
