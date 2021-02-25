@@ -29,22 +29,38 @@ class Marker:
         Marking interests of region (ROIs) on images.
 
         After selecting the ROIs, a separate json file (markings_savefn) is created, which
-        contains 
+        contains dictionary {image1_fn: [[ROI1, ROI2, ...]], ...}
+            where ROI = [x,y,w,h]    (or [x1,y1,x2,y2] when selection_type='arrow')
         
-        fig, ax             plt.subplots() generated
-        image_fns           A list of image file names that are to be annotated
-        markings_savefn     Filename where the annotations are saved. If None do not save
-        crops               List where an item is crp[ [x,y,w,h] for each image
-        old_markings        A filename to old markings (string or list) or loaded old markings (dict)
-                            or True to try to load from where markings would be saved.
-        callback_on_exit    This gets called on successfull exit
-        reslect_fns         List of filenames that get reselected even if previous values exits
-        relative_fns_from   If a valid path, in the markings file save relative fns starting from
-                                this directory instead of the full, absolute filenames.
-        drop_imagefn        Omits the image file name from the final markings dictionary.
-                            May be usefull if marking made for the image in the folder
-                            is to be used for all other images in the folder as well.
-        selection_type      'box' or 'arrow'
+        Arguments
+        ---------
+        fig, ax : objects
+            What matplotlib plt.subplots() gives you
+        image_fns : list of strings
+            A list of image file names that are to be annotated
+        markings_savefn : string
+            Filename where the annotations are saved. If None do not save
+        crops : sequence of 4 ints
+            List where an item is crop[ [x,y,w,h] for each image.
+            It is save to (accidentally) crop over the image coordinates.
+        old_markings : string or dict or True
+            Either filename to old markings (a string),
+            loaded old markings (dict {fn: [x,y,w,h]}, ...),
+            or True to load from markings_savefn.
+        callback_on_exit : callable
+            This gets called on successfull exit
+        reslect_fns: list of strings
+            List of image filenames should be remarked even if previous markings
+            exist.
+        relative_fns_from : string
+            If a valid path, the saved markings contain relative filenames starting from
+            this directory instead of the full, absolute filenames.
+        drop_imagefn : bool
+            Omits the image file name from the final markings dictionary.
+            May be usefull if marking made for the image in the folder
+            is to be used for all other images in the folder as well.
+        selection_type : string
+            'box' or 'arrow'
         '''
         
         self.fig = fig
