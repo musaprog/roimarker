@@ -23,25 +23,44 @@ class Marker:
     
     def __init__(self, fig, ax, image_fns, markings_savefn, crops=None, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
-            relative_fns_from=None,
+            relative_fns_from=None, drop_imagefn = False,
             selection_type='box'):
         '''
         Marking interests of region (ROIs) on images.
 
         After selecting the ROIs, a separate json file (markings_savefn) is created, which
-        contains 
+        contains dictionary {image1_fn: [[ROI1, ROI2, ...]], ...}
+            where ROI = [x,y,w,h]    (or [x1,y1,x2,y2] when selection_type='arrow')
         
-        fig, ax             plt.subplots() generated
-        image_fns           A list of image file names that are to be annotated
-        markings_savefn     Filename where the annotations are saved. If None do not save
-        crops               List where an item is crp[ [x,y,w,h] for each image
-        old_markings        A filename to old markings (string or list) or loaded old markings (dict)
-                            or True to try to load from where markings would be saved.
-        callback_on_exit    This gets called on successfull exit
-        reslect_fns         List of filenames that get reselected even if previous values exits
-        relative_fns_from   If a valid path, in the markings file save relative fns starting from
-                                this directory instead of the full, absolute filenames.
-        selection_type      'box' or 'arrow'
+        Arguments
+        ---------
+        fig, ax : objects
+            What matplotlib plt.subplots() gives you
+        image_fns : list of strings
+            A list of image file names that are to be annotated
+        markings_savefn : string
+            Filename where the annotations are saved. If None do not save
+        crops : sequence of 4 ints
+            List where an item is crop[ [x,y,w,h] for each image.
+            It is save to (accidentally) crop over the image coordinates.
+        old_markings : string or dict or True
+            Either filename to old markings (a string),
+            loaded old markings (dict {fn: [x,y,w,h]}, ...),
+            or True to load from markings_savefn.
+        callback_on_exit : callable
+            This gets called on successfull exit
+        reslect_fns: list of strings
+            List of image filenames should be remarked even if previous markings
+            exist.
+        relative_fns_from : string
+            If a valid path, the saved markings contain relative filenames starting from
+            this directory instead of the full, absolute filenames.
+        drop_imagefn : bool
+            Omits the image file name from the final markings dictionary.
+            May be usefull if marking made for the image in the folder
+            is to be used for all other images in the folder as well.
+        selection_type : string
+            'box' or 'arrow'
         '''
         
         self.fig = fig
@@ -62,10 +81,11 @@ class Marker:
             raise ValueError("relative_fns_from if set, has to be a proper a proper directory")
 
         self.relative_fns_from = relative_fns_from
+        self.drop_imagefn = drop_imagefn
 
         self.clipping = clipping
         self.image_maxval = 1
-        
+        self.image_minval = 0 
 
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
         
@@ -113,10 +133,16 @@ class Marker:
         Returns self.markings but with relative filesnames with rescpect to
         self.relative_fns_from if set. If not set, just returns self.markings
         '''
+
         if self.relative_fns_from:
-            return {os.path.relpath(fn, start=self.relative_fns_from): rois for fn, rois in self.markings.items()}
+            fns = {os.path.relpath(fn, start=self.relative_fns_from): rois for fn, rois in self.markings.items()}
         else:
-            return self.markings
+            fns =  self.markings
+        
+        if self.drop_imagefn:
+            fns = {os.path.dirname(fn): rois for fn, rois in fns.items()}
+        
+        return fns
 
 
     def run(self):
@@ -170,7 +196,13 @@ class Marker:
         elif event.key == 'x':
             self.image_maxval += 0.3
             self.update_image()
-        
+        elif event.key == 'c':
+            self.image_minval -= 0.2
+            self.update_image()
+        elif event.key == 'v':
+            self.image_minval += 0.2
+            self.update_image()
+
         #elif event.key == 'c':
         #    os.remove(self.current)
         #    self.next_image()
@@ -250,6 +282,11 @@ class Marker:
         except ValueError:
             print('Old markings')
             raise ValueError('Cannot read file {}'.format(self.current))
+        
+        # If stack, take the first image
+        if len(self.image.shape) == 3:
+            self.image = self.image[0,:,:]
+
         self.image -= np.min(self.image)
         #print((self.image))
         self.image /= np.max(self.image)
@@ -261,8 +298,8 @@ class Marker:
         image = self.image
 
         if self.clipping:
-            capvals = (0, np.mean(image) *self.image_maxval)
-            image = np.clip(image, *capvals)
+            capvals = (np.mean(image) * self.image_minval, np.mean(image) *self.image_maxval)
+            image = np.clip(image, *capvals) - capvals[0]
             image /= np.max(image)
 
             #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
