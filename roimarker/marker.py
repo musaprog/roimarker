@@ -266,6 +266,11 @@ class Marker:
         except ValueError:
             print('Old markings')
             raise ValueError('Cannot read file {}'.format(self.current))
+        
+        # If stack, take the first image
+        if len(self.image.shape) == 3:
+            self.image = self.image[0,:,:]
+
         self.image -= np.min(self.image)
         #print((self.image))
         self.image /= np.max(self.image)
