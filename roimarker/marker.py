@@ -69,7 +69,7 @@ class Marker:
 
         self.clipping = clipping
         self.image_maxval = 1
-        
+        self.image_minval = 0 
 
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
         
@@ -180,7 +180,13 @@ class Marker:
         elif event.key == 'x':
             self.image_maxval += 0.3
             self.update_image()
-        
+        elif event.key == 'c':
+            self.image_minval -= 0.2
+            self.update_image()
+        elif event.key == 'v':
+            self.image_minval += 0.2
+            self.update_image()
+
         #elif event.key == 'c':
         #    os.remove(self.current)
         #    self.next_image()
@@ -271,8 +277,8 @@ class Marker:
         image = self.image
 
         if self.clipping:
-            capvals = (0, np.mean(image) *self.image_maxval)
-            image = np.clip(image, *capvals)
+            capvals = (np.mean(image) * self.image_minval, np.mean(image) *self.image_maxval)
+            image = np.clip(image, *capvals) - capvals[0]
             image /= np.max(image)
 
             #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
