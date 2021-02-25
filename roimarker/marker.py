@@ -23,7 +23,7 @@ class Marker:
     
     def __init__(self, fig, ax, image_fns, markings_savefn, crops=None, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
-            relative_fns_from=None,
+            relative_fns_from=None, drop_imagefn = False,
             selection_type='box'):
         '''
         Marking interests of region (ROIs) on images.
@@ -41,6 +41,9 @@ class Marker:
         reslect_fns         List of filenames that get reselected even if previous values exits
         relative_fns_from   If a valid path, in the markings file save relative fns starting from
                                 this directory instead of the full, absolute filenames.
+        drop_imagefn        Omits the image file name from the final markings dictionary.
+                            May be usefull if marking made for the image in the folder
+                            is to be used for all other images in the folder as well.
         selection_type      'box' or 'arrow'
         '''
         
@@ -62,6 +65,7 @@ class Marker:
             raise ValueError("relative_fns_from if set, has to be a proper a proper directory")
 
         self.relative_fns_from = relative_fns_from
+        self.drop_imagefn = drop_imagefn
 
         self.clipping = clipping
         self.image_maxval = 1
@@ -113,10 +117,16 @@ class Marker:
         Returns self.markings but with relative filesnames with rescpect to
         self.relative_fns_from if set. If not set, just returns self.markings
         '''
+
         if self.relative_fns_from:
-            return {os.path.relpath(fn, start=self.relative_fns_from): rois for fn, rois in self.markings.items()}
+            fns = {os.path.relpath(fn, start=self.relative_fns_from): rois for fn, rois in self.markings.items()}
         else:
-            return self.markings
+            fns =  self.markings
+        
+        if self.drop_imagefn:
+            fns = {os.path.dirname(fn): rois for fn, rois in fns.items()}
+        
+        return fns
 
 
     def run(self):
