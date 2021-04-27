@@ -360,9 +360,8 @@ class Marker:
         
         self.exit = True
         
-        
 
-if __name__ == "__main__":
+def main(): 
     '''
     Running marker as a tool directly from terminal / command line.
     '''
@@ -378,4 +377,8 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     marker = Marker(fig, ax, image_fns, markings_save_fn)
     marker.run()
+       
+
+if __name__ == "__main__":
+    main()
 
