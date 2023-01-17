@@ -86,6 +86,9 @@ class Marker:
         self.clipping = clipping
         self.image_maxval = 1
         self.image_minval = 0 
+        
+        self.image = None
+        self.previous_image_shape = None
 
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
         
@@ -276,12 +279,17 @@ class Marker:
 
         print('Annotating image {}/{}'.format(self.current_i+1+self.N_previous, len(self.fns)+self.N_previous))
         print(self.current)
+        if self.image is not None:
+            self.previous_image_shape = self.image.shape
+        
         try:
-            self.image = tifffile.imread(self.current).astype(np.float32)
+            #self.image = tifffile.imread(self.current).astype(np.float32)
+
+            self.image = tifffile.TiffFile(self.current).asarray(key=0).astype(np.float32)
             print(self.image.shape)
-        except ValueError:
+        except ValueError as e:
             print('Old markings')
-            raise ValueError('Cannot read file {}'.format(self.current))
+            raise ValueError('\n{}Cannot read file {}'.format(self.current))
         
         # If stack, take the first image
         if len(self.image.shape) == 3:
@@ -308,6 +316,8 @@ class Marker:
         #    #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
         
         try:
+            if image.shape != self._previous_image_shape:
+                raise AttributeError
             self.ax_imshow.set_data(image)
         except AttributeError:
             #self.ax.set_xlim(0,image.shape[1])
