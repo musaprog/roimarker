@@ -14,12 +14,20 @@ import tifffile
 import numpy as np
 import tkinter.messagebox
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from matplotlib.widgets import RectangleSelector
 
 from roimarker.arrow_selector import ArrowSelector
 
 
 class Marker:
+    '''
+    Attributes
+    ----------
+    visible_rectangles : list
+        Contains the matplotlib Rectangle-patches for the selected ROIs
+        in the current image.
+    '''
     
     def __init__(self, fig, ax, image_fns, markings_savefn, crops=None, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
@@ -130,6 +138,8 @@ class Marker:
         self.callback_on_exit = callback_on_exit
         self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
 
+        self.visible_rectangles = []
+
 
     def _get_relative_markings(self):
         '''
@@ -229,6 +239,14 @@ class Marker:
             self.markings[self.current] = []
         
         self.markings[self.current].append([x, y, width, height])
+        
+        # Add a static rectangle to show the made selection
+        rectangle = Rectangle(
+                (x,y), width, height,
+                alpha=0.2)
+        self.ax.add_patch(rectangle)
+        self.visible_rectangles.append(rectangle)
+        plt.draw()
 
 
     def _on_select_arrow(self, eclick, erelease):
@@ -270,8 +288,12 @@ class Marker:
             self.current_i == len(self.fns)
             self.exit = True
             return 0
+        
+        # Remove rectangle visible selections
+        for patch in self.visible_rectangles:
+            patch.remove()
+        self.visible_rectangles = []
 
-       
         # Set marking to empty
         self.markings[self.current] = []
        
