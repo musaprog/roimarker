@@ -1,7 +1,5 @@
+'''roimarker - A general purpose marker/annotation tool.
 '''
-General purpose marker/annotation tool.
-'''
-
 
 import re
 import os
@@ -21,7 +19,10 @@ from roimarker.arrow_selector import ArrowSelector
 
 
 class Marker:
-    '''
+    '''Opens a matplotlib figure for annotating images.
+
+    See also documentation at the __init__ method.
+
     Attributes
     ----------
     visible_rectangles : list
@@ -192,27 +193,26 @@ class Marker:
 
 
     def __button_pressed(self, event):
+        '''A callback funtion for matplotlib's event manager to handle buttons.
         '''
-        A callback function connecting to matplotlib's event manager.
-        '''
-
+        key = event.key
 
         # Navigating between the images
-        if event.key == 'n':
+        if key == 'n':
             self.next_image()
-        elif event.key == 'w':
+        elif key == 'w':
             self.save_markings()
 
-        elif event.key == 'z':
+        elif key == 'z':
             self.image_maxval -= 0.3
             self.update_image()
-        elif event.key == 'x':
+        elif key == 'x':
             self.image_maxval += 0.3
             self.update_image()
-        elif event.key == 'c':
+        elif key == 'c':
             self.image_minval -= 0.2
             self.update_image()
-        elif event.key == 'v':
+        elif key == 'v':
             self.image_minval += 0.2
             self.update_image()
         
@@ -224,17 +224,12 @@ class Marker:
                 self.visible_rectangles.pop(-1).remove()
                 plt.draw()
 
-        #elif event.key == 'c':
-        #    os.remove(self.current)
-        #    self.next_image()
-
 
     def _on_select_rectangle(self, eclick, erelease):
         
         # Get selection box coordinates and set the box inactive
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        #self.rectangle.set_active(False)
         
         x = int(min((x1, x2)))
         y = int(min((y1, y2)))
@@ -281,8 +276,6 @@ class Marker:
 
         for fn in self.fns[self.current_i:]:
             print(fn)
-            print(os.path.basename(os.path.dirname(fn)))
-            print(self.reselect_fns)
             if not fn in self.markings.keys() and self.reselect_fns is None:
                 self.current = fn
                 break
@@ -313,10 +306,7 @@ class Marker:
             self.previous_image_shape = self.image.shape
         
         try:
-            #self.image = tifffile.imread(self.current).astype(np.float32)
-
             self.image = tifffile.TiffFile(self.current).asarray(key=0).astype(np.float32)
-            print(self.image.shape)
         except ValueError as e:
             print('Old markings')
             raise ValueError('\n{}Cannot read file {}'.format(self.current))
@@ -324,9 +314,8 @@ class Marker:
         # If stack, take the first image
         if len(self.image.shape) == 3:
             self.image = self.image[0,:,:]
-
+        
         self.image -= np.min(self.image)
-        #print((self.image))
         self.image /= np.max(self.image)
         self.update_image()
 
@@ -340,11 +329,6 @@ class Marker:
             image = np.clip(image, *capvals) - capvals[0]
             image /= np.max(image)
 
-            #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
-            
-        #else:
-        #    #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
-        
         if image.shape == self.previous_image_shape:
             self.ax_imshow.set_data(image)
         else:
@@ -354,7 +338,6 @@ class Marker:
             c = self.crops[self.current_i]
             self.ax.set_xlim(c[0], c[0]+c[2])
             self.ax.set_ylim(c[1]+c[3], c[1])
-            #self.ax_imshow.set_extent([c[0], c[0]+c[2], c[1], c[1]+c[3]])
 
         # If previous image shape not set at this point (opening the first image),
         # then use current shape as the previous also (othewise a bug that on the
@@ -364,7 +347,6 @@ class Marker:
             self.previous_image_shape = self.image.shape
 
         plt.draw()
-        #plt.draw()
        
     
     def set_markings_savefn(self, fn):
@@ -375,7 +357,6 @@ class Marker:
         
         with open(fn, 'r') as fp:
             markings = json.load(fp)
-        
         self.markings = markings
 
 
@@ -399,7 +380,6 @@ class Marker:
 
     
     def close(self):
-        
         self.exit = True
         
 
