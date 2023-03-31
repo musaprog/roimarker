@@ -215,6 +215,14 @@ class Marker:
         elif event.key == 'v':
             self.image_minval += 0.2
             self.update_image()
+        
+        elif event.key == 'ctrl+z':
+            if self.markings[self.current]:
+                self.markings[self.current].pop(-1)
+
+            if self.visible_rectangles:
+                self.visible_rectangles.pop(-1).remove()
+                plt.draw()
 
         #elif event.key == 'c':
         #    os.remove(self.current)
