@@ -337,13 +337,9 @@ class Marker:
         #else:
         #    #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
         
-        try:
-            if image.shape != self._previous_image_shape:
-                raise AttributeError
+        if image.shape == self.previous_image_shape:
             self.ax_imshow.set_data(image)
-        except AttributeError:
-            #self.ax.set_xlim(0,image.shape[1])
-            #self.ax.set_ylim(image.shape[0], 0)
+        else:
             self.ax_imshow = self.ax.imshow(image, cmap='gist_gray', interpolation='nearest', vmin=0, vmax=1) #extent=[0, image.shape[0], 0, image.shape[1]])
         
         if self.crops:
