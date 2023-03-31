@@ -356,6 +356,12 @@ class Marker:
             self.ax.set_ylim(c[1]+c[3], c[1])
             #self.ax_imshow.set_extent([c[0], c[0]+c[2], c[1], c[1]+c[3]])
 
+        # If previous image shape not set at this point (opening the first image),
+        # then use current shape as the previous also (othewise a bug that on the
+        # first image setting brightess is slow and slows down the program
+        # progressively)
+        if self.previous_image_shape is None:
+            self.previous_image_shape = self.image.shape
 
         plt.draw()
         #plt.draw()
