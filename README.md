@@ -1,10 +1,12 @@
 # Roimarker
 
-A simple region of interest (ROI) creator using matplotlib to
-annotate images with rectangular ROI.
+Annotates region of interest (ROI) using matplotlib
+and Python.
 
-**Warning**: Roimarker is still quite plain and unfinished.
-
+- Draw rectangular ROIs with your mouse
+- Quickly change to the next image by pressing *N*
+- Adjust brightness/contrast with keys *Z*,*X*,*C*,*V*
+- Undo with *Ctrl+Z*
 
 ## Installing
 
@@ -14,20 +16,27 @@ pip install roimarker
 
 ## Usage
 
-Both (1) and (2) (below) launch the same interface, iterating
-over the given images.
-
-### 1) Standalone
+### A) Standalone tool
 
 ```
 python -m roimarker DIRECTORY
 ```
 
-where DIRECTORY contains all the image files to annotate.
-This saves *markings.json* file when finished (see below).
+Here, replace DIRECTORY with the folder containing all the
+image files to be annotated.
 
+When finished, a *markings.json* file
+is created to the current working directory
+with the following structure:
 
-### 2) As part of your program
+```python
+{fn1: [ROI_1, ROI_2, ROI_3, ..], fn2: [ROI_1, ...], ...}
+
+where
+	ROI_i = [x,y,w,h]
+```
+
+### B) In your programs
 
 ```python
 import matplotlib.pyplot as plt
@@ -41,18 +50,4 @@ image_fns = ['image1.tif', 'image2.tif', 'image3.tif']
 
 marker = Marker(fig, ax, image_fns, 'markings.json')
 marker.run()
-```
-
-This opens a window where the user can draw a number of rectangle
-ROIs on the images. Pressing *n* advances to the next image,
-and *z*, *x*, *c* and *v* can be used to adjust brightness/contrast.
-After going through all the images or when manually pressing *w*,
-a *markings.json* file in the current directory, containin
-the ROIs in the following format
-
-```python
-{fn1: [ROI_1, ROI_2, ROI_3, ..], fn2: [ROI_1, ...], ...}
-
-where
-	ROI_i = [x,y,w,h]
 ```
