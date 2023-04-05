@@ -1,7 +1,5 @@
+'''roimarker - A general purpose marker/annotation tool.
 '''
-General purpose marker/annotation tool.
-'''
-
 
 import re
 import os
@@ -14,12 +12,23 @@ import tifffile
 import numpy as np
 import tkinter.messagebox
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from matplotlib.widgets import RectangleSelector
 
 from roimarker.arrow_selector import ArrowSelector
 
 
 class Marker:
+    '''Opens a matplotlib figure for annotating images.
+
+    See also documentation at the __init__ method.
+
+    Attributes
+    ----------
+    visible_rectangles : list
+        Contains the matplotlib Rectangle-patches for the selected ROIs
+        in the current image.
+    '''
     
     def __init__(self, fig, ax, image_fns, markings_savefn, crops=None, clipping=True, old_markings=None,
             callback_on_exit=None, reselect_fns=None,
@@ -86,6 +95,9 @@ class Marker:
         self.clipping = clipping
         self.image_maxval = 1
         self.image_minval = 0 
+        
+        self.image = None
+        self.previous_image_shape = None
 
         self.cid = self.fig.canvas.mpl_connect('key_press_event', self.__button_pressed)
         
@@ -126,6 +138,8 @@ class Marker:
         self.exit = False
         self.callback_on_exit = callback_on_exit
         self.fig.canvas.mpl_connect('close_event', lambda x: self.close())
+
+        self.visible_rectangles = []
 
 
     def _get_relative_markings(self):
@@ -179,33 +193,36 @@ class Marker:
 
 
     def __button_pressed(self, event):
+        '''A callback funtion for matplotlib's event manager to handle buttons.
         '''
-        A callback function connecting to matplotlib's event manager.
-        '''
-
+        key = event.key
 
         # Navigating between the images
-        if event.key == 'n':
+        if key == 'n':
             self.next_image()
-        elif event.key == 'w':
+        elif key == 'w':
             self.save_markings()
 
-        elif event.key == 'z':
+        elif key == 'z':
             self.image_maxval -= 0.3
             self.update_image()
-        elif event.key == 'x':
+        elif key == 'x':
             self.image_maxval += 0.3
             self.update_image()
-        elif event.key == 'c':
+        elif key == 'c':
             self.image_minval -= 0.2
             self.update_image()
-        elif event.key == 'v':
+        elif key == 'v':
             self.image_minval += 0.2
             self.update_image()
+        
+        elif event.key == 'ctrl+z':
+            if self.markings[self.current]:
+                self.markings[self.current].pop(-1)
 
-        #elif event.key == 'c':
-        #    os.remove(self.current)
-        #    self.next_image()
+            if self.visible_rectangles:
+                self.visible_rectangles.pop(-1).remove()
+                plt.draw()
 
 
     def _on_select_rectangle(self, eclick, erelease):
@@ -213,7 +230,6 @@ class Marker:
         # Get selection box coordinates and set the box inactive
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        #self.rectangle.set_active(False)
         
         x = int(min((x1, x2)))
         y = int(min((y1, y2)))
@@ -226,6 +242,14 @@ class Marker:
             self.markings[self.current] = []
         
         self.markings[self.current].append([x, y, width, height])
+        
+        # Add a static rectangle to show the made selection
+        rectangle = Rectangle(
+                (x,y), width, height,
+                alpha=0.2)
+        self.ax.add_patch(rectangle)
+        self.visible_rectangles.append(rectangle)
+        plt.draw()
 
 
     def _on_select_arrow(self, eclick, erelease):
@@ -252,8 +276,6 @@ class Marker:
 
         for fn in self.fns[self.current_i:]:
             print(fn)
-            print(os.path.basename(os.path.dirname(fn)))
-            print(self.reselect_fns)
             if not fn in self.markings.keys() and self.reselect_fns is None:
                 self.current = fn
                 break
@@ -267,8 +289,12 @@ class Marker:
             self.current_i == len(self.fns)
             self.exit = True
             return 0
+        
+        # Remove rectangle visible selections
+        for patch in self.visible_rectangles:
+            patch.remove()
+        self.visible_rectangles = []
 
-       
         # Set marking to empty
         self.markings[self.current] = []
        
@@ -276,19 +302,20 @@ class Marker:
 
         print('Annotating image {}/{}'.format(self.current_i+1+self.N_previous, len(self.fns)+self.N_previous))
         print(self.current)
+        if self.image is not None:
+            self.previous_image_shape = self.image.shape
+        
         try:
-            self.image = tifffile.imread(self.current).astype(np.float32)
-            print(self.image.shape)
-        except ValueError:
+            self.image = tifffile.TiffFile(self.current).asarray(key=0).astype(np.float32)
+        except ValueError as e:
             print('Old markings')
-            raise ValueError('Cannot read file {}'.format(self.current))
+            raise ValueError('\n{}Cannot read file {}'.format(self.current))
         
         # If stack, take the first image
         if len(self.image.shape) == 3:
             self.image = self.image[0,:,:]
-
+        
         self.image -= np.min(self.image)
-        #print((self.image))
         self.image /= np.max(self.image)
         self.update_image()
 
@@ -302,27 +329,24 @@ class Marker:
             image = np.clip(image, *capvals) - capvals[0]
             image /= np.max(image)
 
-            #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest', vmin=capvals[0], vmax=capvals[1])
-            
-        #else:
-        #    #self.ax.imshow(self.image,cmap='gist_gray', interpolation='nearest')
-        
-        try:
+        if image.shape == self.previous_image_shape:
             self.ax_imshow.set_data(image)
-        except AttributeError:
-            #self.ax.set_xlim(0,image.shape[1])
-            #self.ax.set_ylim(image.shape[0], 0)
+        else:
             self.ax_imshow = self.ax.imshow(image, cmap='gist_gray', interpolation='nearest', vmin=0, vmax=1) #extent=[0, image.shape[0], 0, image.shape[1]])
         
         if self.crops:
             c = self.crops[self.current_i]
             self.ax.set_xlim(c[0], c[0]+c[2])
             self.ax.set_ylim(c[1]+c[3], c[1])
-            #self.ax_imshow.set_extent([c[0], c[0]+c[2], c[1], c[1]+c[3]])
 
+        # If previous image shape not set at this point (opening the first image),
+        # then use current shape as the previous also (othewise a bug that on the
+        # first image setting brightess is slow and slows down the program
+        # progressively)
+        if self.previous_image_shape is None:
+            self.previous_image_shape = self.image.shape
 
         plt.draw()
-        #plt.draw()
        
     
     def set_markings_savefn(self, fn):
@@ -333,7 +357,6 @@ class Marker:
         
         with open(fn, 'r') as fp:
             markings = json.load(fp)
-        
         self.markings = markings
 
 
@@ -357,7 +380,6 @@ class Marker:
 
     
     def close(self):
-        
         self.exit = True
         
 
