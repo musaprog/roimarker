@@ -168,9 +168,28 @@ class Marker:
         '''
         self.next_image()
         
-        self.ax.text(0, 1.02, 'n: Next image\nx & z: Change brightness capping\nw: Save\nAutosave after the last image', transform=self.ax.transAxes,
-                verticalalignment='bottom')
-        
+        self.short_help = self.ax.text(
+                0, 1.02, 'Press H for keyboard bindings help',
+                transform=self.ax.transAxes, verticalalignment='bottom')
+        self.short_help.set(alpha=1)
+
+        self.long_help = self.ax.text(
+                0, 10.98,
+                (
+                    'N - Next image\n'
+                    'Z,X -  Adjust max-clip\n'
+                    'C,V - Adjust min-clip\n'
+                    'W - Manual save (automatic after the final image)\n'
+                    'Ctrl+Z - Undo\n'
+                    ),
+                     transform=self.ax.transAxes,
+                     verticalalignment='top',
+                     backgroundcolor='white'
+                     )
+        self.long_help.set(alpha=0)
+        self._help_visible = False
+
+
         plt.show(block=False)
         
         while self.exit == False:
@@ -203,6 +222,16 @@ class Marker:
         elif key == 'w':
             self.save_markings()
 
+        elif key == 'h':
+            if not self._help_visible:
+                self.long_help.set(alpha=1, y=0.98)
+                self.short_help.set(alpha=0)
+                self._help_visible = True
+            else:
+                self.long_help.set(alpha=0, y=10)
+                self.short_help.set(alpha=1)
+                self._help_visible = False
+            plt.draw()
         elif key == 'z':
             self.image_maxval -= 0.3
             self.update_image()
