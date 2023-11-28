@@ -20,7 +20,7 @@ setuptools.setup(
     description="A rectangle-ROI annotator using matplotlib",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jkemppainen/roimarker",
+    url="https://github.com/musaprog/roimarker",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     classifiers=[
